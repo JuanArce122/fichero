@@ -3,13 +3,11 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Icon, type IconName } from '../components/Icon';
 import { InstallBanner, Welcome } from '../components/Onboarding';
-import { useToast, useAskToSave } from '../components/ui';
 import { db } from '../db/db';
 import { useBooksMap, useSettings, useTopicsMap } from '../hooks';
-import { backupResultMessage, exportBackupNow } from '../lib/backupActions';
 import { PRACTICE_DAYS, practiceDayNumber } from '../lib/apply';
 import { dayKey } from '../lib/dates';
-import { computeNotices } from '../lib/notices';
+import { backupNotice, computeNotices } from '../lib/notices';
 import { onThisDay } from '../lib/onThisDay';
 
 interface Quote {
@@ -72,20 +70,7 @@ export default function Home() {
     const [journal, cards, highlights] = await Promise.all([db.journal.toArray(), db.cards.toArray(), db.highlights.toArray()]);
     return onThisDay(dayKey(), { journal, cards, highlights });
   }, [], []);
-  const toast = useToast();
-  const askToSave = useAskToSave();
-  const [backingUp, setBackingUp] = useState(false);
-
-  const backup = async () => {
-    setBackingUp(true);
-    try {
-      toast(backupResultMessage(await exportBackupNow(askToSave)));
-    } catch (e) {
-      toast(`No se pudo crear el respaldo: ${(e as Error).message}`);
-    } finally {
-      setBackingUp(false);
-    }
-  };
+  const backupDue = useLiveQuery(async () => !!(await backupNotice(settings)), [settings], false);
 
   return (
     <div className="page">
@@ -95,8 +80,9 @@ export default function Home() {
         <Link to="/buscar" className="icon-btn" aria-label="Buscar">
           <Icon name="search" />
         </Link>
-        <Link to="/ajustes" className="icon-btn" aria-label="Ajustes">
+        <Link to="/ajustes" className="icon-btn badge-host" aria-label={backupDue ? 'Ajustes: respaldo pendiente' : 'Ajustes'}>
           <Icon name="settings" />
+          {backupDue && <span className="badge-dot" />}
         </Link>
       </header>
 
@@ -120,29 +106,16 @@ export default function Home() {
       {notices.length > 0 && (
         <section className="stack-sm">
           <div className="section-title">Pendiente</div>
-          {notices.map((n) =>
-            n.kind === 'backup' ? (
-              <div key={n.kind} className="notice warn">
-                <span className="dot" />
-                <div className="spacer">
-                  <div>{n.title}</div>
-                  {n.detail && <div className="small muted">{n.detail}</div>}
-                </div>
-                <button className="btn small primary" onClick={backup} disabled={backingUp}>
-                  <Icon name="shield" size={16} /> Respaldar
-                </button>
+          {notices.map((n) => (
+            <Link key={n.kind + n.title} to={n.to!} className={`notice${n.warn ? ' warn' : ''}`}>
+              <span className="dot" />
+              <div className="spacer">
+                <div>{n.title}</div>
+                {n.detail && <div className="small muted">{n.detail}</div>}
               </div>
-            ) : (
-              <Link key={n.kind + n.title} to={n.to!} className={`notice${n.warn ? ' warn' : ''}`}>
-                <span className="dot" />
-                <div className="spacer">
-                  <div>{n.title}</div>
-                  {n.detail && <div className="small muted">{n.detail}</div>}
-                </div>
-                <Icon name="chevron" size={18} />
-              </Link>
-            ),
-          )}
+              <Icon name="chevron" size={18} />
+            </Link>
+          ))}
         </section>
       )}
 

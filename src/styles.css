@@ -1381,3 +1381,18 @@ select:focus-visible {
   -webkit-user-select: text;
   user-select: text;
 }
+
+.badge-host {
+  position: relative;
+}
+
+.badge-dot {
+  position: absolute;
+  top: 9px;
+  right: 9px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--warn);
+  box-shadow: 0 0 0 2px var(--bg);
+}

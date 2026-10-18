@@ -28,7 +28,6 @@ export function backupOverdue(settings: Settings, hasData: boolean, now = Date.n
 export async function computeNotices(settings: Settings, db: FicheroDB = defaultDb, now = Date.now()): Promise<Notice[]> {
   const notices: Notice[] = [];
   const [highlights, cards] = await Promise.all([db.highlights.count(), db.cards.count()]);
-  const hasData = highlights + cards > 0 || (await db.books.count()) > 0;
 
   const session = await db.dailySessions.get(dayKey(now));
   if (highlights + cards > 0) {
@@ -78,15 +77,19 @@ export async function computeNotices(settings: Settings, db: FicheroDB = default
     });
   }
 
-  if (backupOverdue(settings, hasData, now)) {
-    notices.push({
-      kind: 'backup',
-      warn: true,
-      title: 'Respaldo pendiente',
-      detail: settings.lastBackupAt
-        ? `Último respaldo hace ${daysBetween(settings.lastBackupAt, now)} días`
-        : 'Aún no has hecho ningún respaldo',
-    });
-  }
   return notices;
+}
+
+/** Aviso de respaldo vencido. Se muestra en Ajustes (en Inicio solo un punto en el ícono). */
+export async function backupNotice(settings: Settings, db: FicheroDB = defaultDb, now = Date.now()): Promise<Notice | null> {
+  const hasData = (await db.books.count()) + (await db.highlights.count()) + (await db.cards.count()) > 0;
+  if (!backupOverdue(settings, hasData, now)) return null;
+  return {
+    kind: 'backup',
+    warn: true,
+    title: 'Respaldo pendiente',
+    detail: settings.lastBackupAt
+      ? `Último respaldo hace ${daysBetween(settings.lastBackupAt, now)} días`
+      : 'Aún no has hecho ningún respaldo',
+  };
 }

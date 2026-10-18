@@ -1,16 +1,34 @@
+import { useLiveQuery } from 'dexie-react-hooks';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Icon } from '../components/Icon';
-import { PageHeader } from '../components/ui';
+import { PageHeader, useAskToSave, useToast } from '../components/ui';
 import { updateSettings } from '../db/repo';
 import { DEFAULT_SETTINGS } from '../db/types';
 import { useSettings } from '../hooks';
+import { backupResultMessage, exportBackupNow } from '../lib/backupActions';
+import { backupNotice } from '../lib/notices';
 import { formatBytes, requestPersistence, storageStatus, type StorageStatus } from '../lib/storage';
 
 export default function Settings() {
   const settings = useSettings();
   const [storage, setStorage] = useState<StorageStatus | null>(null);
   const [questions, setQuestions] = useState('');
+  const backup = useLiveQuery(() => backupNotice(settings), [settings], null);
+  const toast = useToast();
+  const askToSave = useAskToSave();
+  const [backingUp, setBackingUp] = useState(false);
+
+  const doBackup = async () => {
+    setBackingUp(true);
+    try {
+      toast(backupResultMessage(await exportBackupNow(askToSave)));
+    } catch (e) {
+      toast(`No se pudo crear el respaldo: ${(e as Error).message}`);
+    } finally {
+      setBackingUp(false);
+    }
+  };
 
   useEffect(() => {
     storageStatus().then(setStorage);
@@ -30,6 +48,19 @@ export default function Settings() {
   return (
     <div className="page">
       <PageHeader title="Ajustes" back />
+
+      {backup && (
+        <div className="notice warn">
+          <span className="dot" />
+          <div className="spacer">
+            <div>{backup.title}</div>
+            {backup.detail && <div className="small muted">{backup.detail}</div>}
+          </div>
+          <button className="btn small primary" onClick={doBackup} disabled={backingUp}>
+            <Icon name="shield" size={16} /> Respaldar
+          </button>
+        </div>
+      )}
 
       <div className="list">
         <Link to="/respaldo" className="list-item">
