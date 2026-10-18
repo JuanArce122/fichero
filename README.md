@@ -50,6 +50,19 @@ peso = frecuencia del libro × frecuencia del tema × (1,5 si es favorito) × fr
 
 La lógica está en `src/lib/review.ts` y sus tests en `src/lib/review.test.ts`.
 
+## OCR local
+
+La captura con foto usa [Tesseract.js](https://github.com/naptha/tesseract.js) en
+el dispositivo, con los modelos `best_int` de español e inglés. El motor (WASM)
+y los idiomas se copian a `public/ocr/` con `scripts/copy-ocr.mjs` (se ejecuta
+solo antes de `dev` y `build`) y se sirven desde el propio sitio; el service
+worker los guarda en caché, así que el OCR funciona sin conexión y ninguna
+imagen sale del dispositivo. Pesan ~13 MB y se descargan una sola vez al
+instalar la app.
+
+Alternativa sin OCR: la cámara del iPhone reconoce texto (Texto en Vivo);
+selecciónalo, cópialo y usa **Pegar** en la captura.
+
 ## Respaldo
 
 El respaldo es un JSON versionado:

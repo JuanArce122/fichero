@@ -8,6 +8,11 @@ export function useSettings(): Settings {
   return useLiveQuery(() => getSettings(), [], DEFAULT_SETTINGS);
 }
 
+/** Igual que useSettings, pero `undefined` hasta que se cargan de la base de datos. */
+export function useLoadedSettings(): Settings | undefined {
+  return useLiveQuery(() => getSettings(), []);
+}
+
 /** URL temporal para una imagen guardada en IndexedDB. */
 export function useImageUrl(id?: ID): string | undefined {
   const record = useLiveQuery(() => (id ? db.images.get(id) : undefined), [id]);

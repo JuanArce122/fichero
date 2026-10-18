@@ -1,6 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Icon } from '../components/Icon';
 import { TagInput } from '../components/items';
 import { PageHeader, Sheet, useConfirm, useToast } from '../components/ui';
@@ -14,8 +14,10 @@ import {
   updateHighlight,
   updateSettings,
 } from '../db/repo';
-import { useImageUrl, useSettings } from '../hooks';
+import { useImageUrl, useLoadedSettings } from '../hooks';
 import { AddChapterSheet } from './BookDetail';
+import type { CaptureState } from './PhotoCapture';
+import { cleanText } from '../lib/text';
 
 /** Captura rápida de subrayados (nuevo) y edición (/subrayado/:id). */
 export default function Capture() {
@@ -25,7 +27,8 @@ export default function Capture() {
   const navigate = useNavigate();
   const toast = useToast();
   const confirm = useConfirm();
-  const settings = useSettings();
+  const settings = useLoadedSettings();
+  const location = useLocation();
   const textRef = useRef<HTMLTextAreaElement>(null);
 
   const existing = useLiveQuery(() => (id ? db.highlights.get(id) : undefined), [id]);
@@ -38,17 +41,18 @@ export default function Capture() {
   const [page, setPage] = useState('');
   const [note, setNote] = useState('');
   const [tags, setTags] = useState<string[]>([]);
+  const [photoId, setPhotoId] = useState<string>();
   const [showMore, setShowMore] = useState(false);
   const [newBookOpen, setNewBookOpen] = useState(false);
   const [newChapterOpen, setNewChapterOpen] = useState(false);
   const initialized = useRef(false);
 
   const chapters = useLiveQuery(() => (bookId ? chaptersOf(bookId) : []), [bookId], []);
-  const photoUrl = useImageUrl(existing?.photoId);
+  const photoUrl = useImageUrl(existing?.photoId ?? photoId);
 
   // Valores iniciales: el subrayado a editar, el libro de la URL o el último usado.
   useEffect(() => {
-    if (initialized.current || !books) return;
+    if (initialized.current || !books || !settings) return;
     if (editing) {
       if (!existing) return;
       setBookId(existing.bookId);
@@ -64,9 +68,15 @@ export default function Capture() {
       const pick = [fromUrl, last].find((b) => b && books.some((x) => x.id === b)) ?? books[0]?.id ?? '';
       setBookId(pick);
       setChapterId(params.get('cap') ?? (pick === last ? settings.lastChapterId ?? '' : ''));
+      // Texto que llega desde Foto + OCR.
+      const fromOcr = location.state as CaptureState | null;
+      if (fromOcr?.text !== undefined) {
+        setText(fromOcr.text);
+        setPhotoId(fromOcr.photoId);
+      }
     }
     initialized.current = true;
-  }, [books, existing, editing, params, settings]);
+  }, [books, existing, editing, params, settings, location.state]);
 
   // Si el capítulo elegido no pertenece al libro, lo limpiamos.
   useEffect(() => {
@@ -76,7 +86,8 @@ export default function Capture() {
   const paste = async () => {
     try {
       const clip = await navigator.clipboard.readText();
-      if (clip) setText((t) => (t ? `${t}\n${clip}` : clip).trim());
+      // Texto en Vivo corta las líneas: las unimos.
+      if (clip) setText((t) => (t ? `${t} ${cleanText(clip)}` : cleanText(clip)).trim());
     } catch {
       toast('Mantén pulsado el campo de texto y elige “Pegar”.');
       textRef.current?.focus();
@@ -86,19 +97,20 @@ export default function Capture() {
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     if (!bookId || !text.trim()) return;
-    const data = { bookId, chapterId: chapterId || undefined, text: cleanText(text), page, note, tags };
+    const data = { bookId, chapterId: chapterId || undefined, text: text.trim(), page, note, tags };
     if (editing) {
       await updateHighlight(id, { ...data, page: page.trim() || undefined, note: note.trim() });
       navigate(-1);
       return;
     }
-    await createHighlight(data);
+    await createHighlight({ ...data, photoId });
     await updateSettings({ lastBookId: bookId, lastChapterId: chapterId || undefined });
     await db.books.update(bookId, { updatedAt: Date.now() });
     toast('Subrayado guardado');
     // Listo para el siguiente: se mantienen libro, capítulo y etiquetas.
     setText('');
     setNote('');
+    setPhotoId(undefined);
     textRef.current?.focus();
   };
 
@@ -115,7 +127,7 @@ export default function Capture() {
     }
   };
 
-  if (!books) return null;
+  if (!books || !settings) return null;
   if (editing && existing === undefined) return null;
 
   return (
@@ -268,16 +280,6 @@ export default function Capture() {
       )}
     </>
   );
-}
-
-/** Une líneas cortadas por el OCR o por Texto en Vivo (guiones y saltos de línea). */
-export function cleanText(text: string): string {
-  return text
-    .replace(/\r/g, '')
-    .replace(/(\w)-\n(\w)/g, '$1$2')
-    .replace(/([^\n])\n(?!\n)/g, '$1 ')
-    .replace(/[ \t]+/g, ' ')
-    .trim();
 }
 
 function NewBookSheet({ open, onClose, onCreated }: { open: boolean; onClose: () => void; onCreated: (id: string) => void }) {

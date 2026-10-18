@@ -11,9 +11,11 @@ import BookForm from './pages/BookForm';
 import Capture from './pages/Capture';
 import CardDetail from './pages/CardDetail';
 import CardForm from './pages/CardForm';
+import ChapterClose from './pages/ChapterClose';
 import Cards from './pages/Cards';
 import Home from './pages/Home';
 import Library from './pages/Library';
+import PhotoCapture from './pages/PhotoCapture';
 import Review from './pages/Review';
 import Settings from './pages/Settings';
 import Topics from './pages/Topics';
@@ -109,8 +111,8 @@ export default function App() {
               <Route path="/repaso" element={<Review />} />
               <Route path="/ajustes" element={<Settings />} />
               <Route path="/respaldo" element={<Backup />} />
-              <Route path="/capturar/foto" element={<ComingSoon title="Foto + OCR" />} />
-              <Route path="/cierre" element={<ComingSoon title="Cierre de capítulo" />} />
+              <Route path="/capturar/foto" element={<PhotoCapture />} />
+              <Route path="/cierre" element={<ChapterClose />} />
               <Route path="/repasos" element={<ComingSoon title="Repasos temáticos" />} />
               <Route path="/maestria/*" element={<ComingSoon title="Maestría" />} />
               <Route path="/practica/*" element={<ComingSoon title="Idea de la semana" />} />
