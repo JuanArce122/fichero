@@ -24,7 +24,7 @@ describe('normalize', () => {
   });
 });
 
-describe('guessLang', () => {
+describe('guessLang (speech)', () => {
   it('distingue español e inglés', async () => {
     const { guessLang } = await import('./speech');
     expect(guessLang('The obstacle is the way and what stands in the way becomes the way')).toBe('en');

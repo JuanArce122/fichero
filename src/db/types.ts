@@ -170,6 +170,10 @@ export interface Settings {
   includePhotosInBackup: boolean;
   journalQuestions: string[];
   lastBackupAt?: number;
+  /** Voz elegida para leer en voz alta (voiceURI), por idioma; vacío = la mejor disponible. */
+  voiceEs?: string;
+  voiceEn?: string;
+  speechRate: number;
   lastBookId?: ID;
   lastChapterId?: ID;
 }
@@ -185,6 +189,7 @@ export const DEFAULT_SETTINGS: Settings = {
   backupReminderDays: 7,
   restDays: 14,
   includePhotosInBackup: false,
+  speechRate: 1,
   journalQuestions: [
     '¿Qué obstáculo tuve hoy?',
     '¿Cómo lo usé o cómo pude haberlo usado?',

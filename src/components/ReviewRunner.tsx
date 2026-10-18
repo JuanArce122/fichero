@@ -4,10 +4,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import { db } from '../db/db';
 import { updateBook, updateCard, updateHighlight } from '../db/repo';
 import { FREQUENCY_LABELS, type Frequency, type ReviewItemRef, type ReviewMeta } from '../db/types';
-import { useBooksMap, useChaptersMap, useTopicsMap } from '../hooks';
+import { useBooksMap, useChaptersMap, useSettings, useTopicsMap } from '../hooks';
 import { recordOutcome, restoreReview } from '../lib/dailyReview';
 import { teaser, type ReviewOutcome } from '../lib/review';
-import { canSpeak, speak, stopSpeaking } from '../lib/speech';
+import { canSpeak, loadVoices, speak, stopSpeaking } from '../lib/speech';
 import { Icon } from './Icon';
 import { CardView, HighlightView } from './items';
 import { SwipeCard } from './SwipeCard';
@@ -53,6 +53,7 @@ export function ReviewRunner({
   const books = useBooksMap();
   const chapters = useChaptersMap();
   const topics = useTopicsMap();
+  const settings = useSettings();
 
   const item = useLiveQuery(async () => {
     if (!ref) return null;
@@ -70,7 +71,11 @@ export function ReviewRunner({
     setSpeaking(false);
   }, [index, recallFirst]);
 
-  useEffect(() => () => stopSpeaking(), []);
+  useEffect(() => {
+    // Precarga las voces: iOS exige que la lectura empiece justo con el toque.
+    loadVoices();
+    return () => stopSpeaking();
+  }, []);
 
   // Si un elemento se borró desde otro lugar, lo saltamos.
   useEffect(() => {
@@ -130,9 +135,9 @@ export function ReviewRunner({
       setSpeaking(false);
     } else {
       setSpeaking(true);
-      speak(text, () => setSpeaking(false));
+      speak(text, { voiceEs: settings.voiceEs, voiceEn: settings.voiceEn, rate: settings.speechRate }, () => setSpeaking(false));
     }
-  }, [speaking, text]);
+  }, [speaking, text, settings]);
 
   // Atajos de teclado para iPad con teclado y Mac.
   useEffect(() => {

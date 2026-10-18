@@ -2,6 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Icon } from '../components/Icon';
+import { VoiceSettings } from '../components/VoiceSettings';
 import { PageHeader, useAskToSave, useToast } from '../components/ui';
 import { updateSettings } from '../db/repo';
 import { DEFAULT_SETTINGS } from '../db/types';
@@ -98,6 +99,11 @@ export default function Settings() {
             style={{ width: 22, height: 22, accentColor: 'var(--accent)' }}
           />
         </label>
+      </div>
+
+      <div className="section-title">Lectura en voz alta</div>
+      <div className="panel">
+        <VoiceSettings settings={settings} />
       </div>
 
       <div className="section-title">Recordatorios</div>
