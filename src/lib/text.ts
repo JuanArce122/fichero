@@ -12,3 +12,14 @@ export function cleanText(text: string): string {
 export function normalize(text: string): string {
   return text.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
 }
+
+/** Palabras (y espacios) de un texto, para seleccionar un tramo tocando. */
+export function words(text: string): string[] {
+  return text.match(/\s+|[^\s]+/g) ?? [];
+}
+
+/** Texto entre dos tokens (inclusive), en cualquier orden. */
+export function sliceTokens(tokens: string[], a: number, b: number): string {
+  const [from, to] = a <= b ? [a, b] : [b, a];
+  return tokens.slice(from, to + 1).join('').trim();
+}

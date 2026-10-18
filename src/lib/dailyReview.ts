@@ -2,7 +2,7 @@
 // a abrir la app) y registra el resultado de cada tarjeta.
 
 import { db as defaultDb, type FicheroDB } from '../db/db';
-import type { Card, DailySession, Highlight, ReviewItemRef } from '../db/types';
+import type { Card, DailySession, Highlight, ReviewItemRef, ReviewMeta } from '../db/types';
 import { dayKey } from './dates';
 import { applyOutcome, weightedSample, type Candidate, type ReviewOutcome } from './review';
 
@@ -98,6 +98,25 @@ export async function recordOutcome(
   const item = await (table as typeof db.cards).get(ref.id);
   if (!item) return;
   await (table as typeof db.cards).update(ref.id, { review: applyOutcome(item.review, outcome, now) });
+}
+
+/** Deshace el último resultado: restaura el estado anterior del elemento. */
+export async function restoreReview(
+  ref: ReviewItemRef,
+  previous: ReviewMeta,
+  db: FicheroDB = defaultDb,
+): Promise<void> {
+  const table = (ref.type === 'highlight' ? db.highlights : db.cards) as typeof db.cards;
+  await table.update(ref.id, { review: previous });
+}
+
+export async function unmarkSessionItemDone(date: string, index: number, db: FicheroDB = defaultDb): Promise<void> {
+  await db.dailySessions
+    .where('date')
+    .equals(date)
+    .modify((s) => {
+      s.done = s.done.filter((i) => i !== index);
+    });
 }
 
 export async function markSessionItemDone(date: string, index: number, db: FicheroDB = defaultDb): Promise<void> {

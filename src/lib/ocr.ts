@@ -15,7 +15,7 @@ async function getWorker(): Promise<Worker> {
   if (!workerPromise) {
     workerPromise = (async () => {
       const { createWorker, OEM } = await import('tesseract.js');
-      return createWorker(['spa', 'eng'], OEM.LSTM_ONLY, {
+      const worker = await createWorker(['spa', 'eng'], OEM.LSTM_ONLY, {
         workerPath: assetUrl('worker.min.js'),
         corePath: assetUrl(''),
         langPath: assetUrl('lang'),
@@ -25,6 +25,10 @@ async function getWorker(): Promise<Worker> {
         cacheMethod: 'none',
         logger: (m: { status: string; progress: number }) => progressListener?.(m.progress, m.status),
       });
+      // Umbral adaptativo (Sauvola): tolera sombras y luz desigual de fotos de libros.
+      // Probado contra el método por defecto con una página con sombra: recupera el texto oscurecido.
+      await worker.setParameters({ thresholding_method: '2' } as Record<string, string>);
+      return worker;
     })().catch((err) => {
       workerPromise = null;
       throw err;

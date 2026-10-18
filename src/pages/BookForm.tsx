@@ -1,11 +1,13 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { BookSearch } from '../components/BookSearch';
 import { BookCover } from '../components/items';
 import { PageHeader, Segmented, useConfirm, useToast } from '../components/ui';
 import { db } from '../db/db';
 import { createBook, deleteBook, saveImage, setBookStatus, updateBook } from '../db/repo';
 import { FREQUENCY_LABELS, STATUS_LABELS, type BookStatus, type Frequency } from '../db/types';
+import { fetchCover, type BookCandidate } from '../lib/bookLookup';
 import { COVER_PHOTO, compressImage } from '../lib/image';
 
 export default function BookForm() {
@@ -42,6 +44,18 @@ export default function BookForm() {
     }
   };
 
+  const pickCandidate = async (c: BookCandidate) => {
+    setTitle(c.title);
+    setAuthor(c.author);
+    if (!c.coverId) return;
+    try {
+      const blob = await compressImage(await fetchCover(c.coverId), COVER_PHOTO);
+      setCoverId(await saveImage('cover', blob));
+    } catch {
+      /* sin portada: el usuario puede agregarla a mano */
+    }
+  };
+
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
@@ -75,6 +89,7 @@ export default function BookForm() {
   return (
     <form className="page" onSubmit={submit}>
       <PageHeader title={isNew ? 'Nuevo libro' : 'Editar libro'} back />
+      {isNew && <BookSearch onPick={pickCandidate} />}
 
       <div className="row nowrap" style={{ alignItems: 'flex-start', gap: 16 }}>
         <button type="button" className="btn ghost" style={{ padding: 0, height: 'auto' }} onClick={() => fileRef.current?.click()}>
@@ -83,7 +98,7 @@ export default function BookForm() {
         <div className="stack" style={{ flex: 1 }}>
           <label className="field">
             <span>Título</span>
-            <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} required autoFocus={isNew} />
+            <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} required />
           </label>
           <label className="field">
             <span>Autor</span>

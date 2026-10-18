@@ -53,3 +53,4 @@ export async function compressImage(file: Blob, opts: CompressOptions, crop?: Cr
     canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('No se pudo comprimir la imagen'))), 'image/jpeg', opts.quality),
   );
 }
+

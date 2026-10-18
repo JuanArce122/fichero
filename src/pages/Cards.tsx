@@ -15,9 +15,11 @@ export default function Cards() {
   const cards = useLiveQuery(() => db.cards.orderBy('createdAt').reverse().toArray(), []);
   const [topicFilter, setTopicFilter] = useState<string | null>(null);
   const [showDiscarded, setShowDiscarded] = useState(false);
+  const [onlyFavorites, setOnlyFavorites] = useState(false);
 
   if (!cards) return null;
-  const visible = cards.filter((c) => showDiscarded || !c.discarded);
+  const visible = cards.filter((c) => (showDiscarded || !c.discarded) && (!onlyFavorites || c.favorite));
+  const favoriteCount = cards.filter((c) => c.favorite && !c.discarded).length;
   const counts = new Map<string, number>();
   for (const c of visible) counts.set(c.topicId, (counts.get(c.topicId) ?? 0) + 1);
   const sections = topics
@@ -58,6 +60,11 @@ export default function Cards() {
             <button className={`chip${topicFilter === null ? ' on' : ''}`} onClick={() => setTopicFilter(null)}>
               Todas ({visible.length})
             </button>
+            {favoriteCount > 0 && (
+              <button className={`chip${onlyFavorites ? ' on' : ''}`} onClick={() => setOnlyFavorites((v) => !v)}>
+                ★ Favoritas ({favoriteCount})
+              </button>
+            )}
             {topics
               .filter((t) => counts.get(t.id))
               .map((t) => (

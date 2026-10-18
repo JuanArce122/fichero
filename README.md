@@ -32,6 +32,23 @@ src/
   pages/       pantallas
 ```
 
+## Decisiones de UX (inspiradas en otras apps)
+
+| Idea | Inspiración | En Fichero |
+| --- | --- | --- |
+| Deslizar tarjetas, atajos de teclado, Deshacer | Readwise, Anki | → recordaba · ← no · Espacio revela · F/D/N/E/L |
+| Lo nuevo primero | Readwise (primera mitad del Daily Review) | peso ×1,6 para lo nunca repasado |
+| Ajustar frecuencia sin salir del repaso | Readwise | menú "···" en cada tarjeta |
+| Maestría al terminar el repaso | Readwise | "Continuar con Maestría" |
+| Escuchar en voz alta | Readwise | voces del sistema, sin conexión |
+| Buscar el libro y su portada | Bookly, Basmo | Open Library (opcional, con conexión) |
+| Elegir el pasaje tras escanear | Basmo | toca la primera y la última palabra |
+| En esta fecha | Day One | Inicio: hace 1 mes, 6 meses, 1 año… |
+| Bienvenida y guía de instalación | buenas prácticas de PWA en iOS | aviso en Safari con los 3 pasos |
+
+Se descartaron, por las reglas del proyecto: rachas y estadísticas, compartir en
+redes, chat o resúmenes con IA.
+
 ## Cómo funciona el repaso diario
 
 Cada subrayado y cada ficha tienen un **peso**:
@@ -70,6 +87,10 @@ instalar la app.
 
 Alternativa sin OCR: la cámara del iPhone reconoce texto (Texto en Vivo);
 selecciónalo, cópialo y usa **Pegar** en la captura.
+
+El OCR usa el umbral adaptativo de Tesseract (Sauvola) porque tolera sombras y
+luz desigual. Se probó también un preprocesado de contraste propio y empeoraba
+el resultado, así que se descartó.
 
 ## Respaldo
 

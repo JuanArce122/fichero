@@ -61,6 +61,7 @@ export default function ThemedReview() {
   };
 
   const onDone = useCallback((i: number) => setSession((s) => (s ? { ...s, done: [...s.done, i] } : s)), []);
+  const onUndo = useCallback((i: number) => setSession((s) => (s ? { ...s, done: s.done.filter((x) => x !== i) } : s)), []);
 
   if (session) {
     const finished = session.done.length >= session.items.length;
@@ -81,7 +82,7 @@ export default function ThemedReview() {
             </button>
           </Empty>
         ) : (
-          <ReviewRunner items={session.items} done={session.done} recallFirst={settings.recallFirst} onDone={onDone} />
+          <ReviewRunner items={session.items} done={session.done} recallFirst={settings.recallFirst} onDone={onDone} onUndo={onUndo} />
         )}
       </div>
     );

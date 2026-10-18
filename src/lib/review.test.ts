@@ -123,6 +123,13 @@ describe('weightedSample', () => {
   });
 });
 
+describe('elementos nuevos', () => {
+  it('tienen prioridad sobre los ya repasados y recuperados', () => {
+    const old = { ...newReviewMeta(), shown: 3, lastShownAt: NOW - 100 * DAY_MS };
+    expect(effectiveWeight(cand('new'), NOW)).toBeGreaterThan(effectiveWeight(cand('old', { review: old }), NOW));
+  });
+});
+
 describe('applyOutcome', () => {
   it('registra la vista y ajusta el período de recuperación', () => {
     const base = newReviewMeta();

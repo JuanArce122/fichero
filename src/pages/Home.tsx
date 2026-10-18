@@ -2,6 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Icon, type IconName } from '../components/Icon';
+import { InstallBanner, Welcome } from '../components/Onboarding';
 import { useToast } from '../components/ui';
 import { db } from '../db/db';
 import { useBooksMap, useSettings, useTopicsMap } from '../hooks';
@@ -9,6 +10,7 @@ import { backupResultMessage, exportBackupNow } from '../lib/backupActions';
 import { PRACTICE_DAYS, practiceDayNumber } from '../lib/apply';
 import { dayKey } from '../lib/dates';
 import { computeNotices } from '../lib/notices';
+import { onThisDay } from '../lib/onThisDay';
 
 interface Quote {
   text: string;
@@ -65,6 +67,11 @@ export default function Home() {
     const p = await db.practices.where('status').equals('active').first();
     return p ? { p, card: await db.cards.get(p.cardId) } : null;
   }, []);
+  const bookCount = useLiveQuery(() => db.books.count(), []);
+  const memories = useLiveQuery(async () => {
+    const [journal, cards, highlights] = await Promise.all([db.journal.toArray(), db.cards.toArray(), db.highlights.toArray()]);
+    return onThisDay(dayKey(), { journal, cards, highlights });
+  }, [], []);
   const toast = useToast();
   const [backingUp, setBackingUp] = useState(false);
 
@@ -81,6 +88,7 @@ export default function Home() {
 
   return (
     <div className="page">
+      <div className="greeting">{greeting()}</div>
       <header className="page-header">
         <h1>Fichero</h1>
         <Link to="/buscar" className="icon-btn" aria-label="Buscar">
@@ -91,7 +99,11 @@ export default function Home() {
         </Link>
       </header>
 
-      {quote === null && (
+      <InstallBanner />
+
+      {bookCount === 0 && <Welcome />}
+
+      {quote === null && bookCount !== 0 && (
         <div className="quote-hero">
           <blockquote>“Lo que impide la acción hace avanzar la acción. Lo que se interpone en el camino se convierte en el camino.”</blockquote>
           <div className="small muted">Marco Aurelio · Agrega tu primer subrayado para ver aquí tus propias citas.</div>
@@ -133,6 +145,26 @@ export default function Home() {
         </section>
       )}
 
+      {memories.length > 0 && (
+        <section className="stack-sm">
+          <div className="section-title">En esta fecha</div>
+          {memories.map((m) => (
+            <Link key={m.kind + m.id} to={m.to} className="notice">
+              <Icon name="calendar" size={20} />
+              <div className="spacer">
+                <div className="tiny muted">
+                  {m.label} · {m.kind === 'journal' ? 'escribiste en tu diario' : m.kind === 'card' ? 'creaste esta ficha' : 'subrayaste'}
+                </div>
+                <div className="clamp-3" style={{ fontFamily: 'var(--font-read)' }}>
+                  {m.text}
+                </div>
+              </div>
+            </Link>
+          ))}
+        </section>
+      )}
+
+      {bookCount !== 0 && (
       <section className="stack-sm">
         <div className="section-title">Idea de la semana</div>
         {practice?.card ? (
@@ -155,6 +187,7 @@ export default function Home() {
           </Link>
         )}
       </section>
+      )}
 
       <section className="stack-sm">
         <div className="section-title">Accesos rápidos</div>
@@ -169,4 +202,12 @@ export default function Home() {
       </section>
     </div>
   );
+}
+
+function greeting(): string {
+  const h = new Date().getHours();
+  if (h < 6) return 'Buenas noches';
+  if (h < 13) return 'Buenos días';
+  if (h < 20) return 'Buenas tardes';
+  return 'Buenas noches';
 }

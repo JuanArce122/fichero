@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Icon } from './Icon';
 
 // ---------- encabezado ----------
@@ -56,11 +56,18 @@ interface ConfirmOptions {
 type ConfirmFn = (opts: ConfirmOptions) => Promise<boolean>;
 
 const ConfirmContext = createContext<ConfirmFn>(async () => false);
-const ToastContext = createContext<(msg: string) => void>(() => {});
+export interface ToastAction {
+  label: string;
+  run: () => void | Promise<void>;
+}
+
+type ToastFn = (msg: string, action?: ToastAction) => void;
+
+const ToastContext = createContext<ToastFn>(() => {});
 
 export function UIProvider({ children }: { children: ReactNode }) {
   const [pending, setPending] = useState<(ConfirmOptions & { resolve: (v: boolean) => void }) | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ msg: string; action?: ToastAction } | null>(null);
   const timer = useRef<number>(undefined);
 
   const confirm = useCallback<ConfirmFn>(
@@ -68,11 +75,18 @@ export function UIProvider({ children }: { children: ReactNode }) {
     [],
   );
 
-  const showToast = useCallback((msg: string) => {
-    setToast(msg);
+  const showToast = useCallback<ToastFn>((msg, action) => {
+    setToast({ msg, action });
     window.clearTimeout(timer.current);
-    timer.current = window.setTimeout(() => setToast(null), 2600);
+    // Con acción (Deshacer) se deja más tiempo para reaccionar.
+    timer.current = window.setTimeout(() => setToast(null), action ? 5000 : 2600);
   }, []);
+
+  // Un aviso informativo no debe seguir a otra pantalla (los de "Deshacer" sí).
+  const { pathname } = useLocation();
+  useEffect(() => {
+    setToast((t) => (t?.action ? t : null));
+  }, [pathname]);
 
   const close = (v: boolean) => {
     pending?.resolve(v);
@@ -100,8 +114,20 @@ export function UIProvider({ children }: { children: ReactNode }) {
           )}
         </Sheet>
         {toast && (
-          <div className="toast" role="status">
-            {toast}
+          <div className={`toast${toast.action ? ' with-action' : ''}`} role="status">
+            <span>{toast.msg}</span>
+            {toast.action && (
+              <button
+                className="toast-action"
+                onClick={() => {
+                  const run = toast.action!.run;
+                  setToast(null);
+                  run();
+                }}
+              >
+                {toast.action.label}
+              </button>
+            )}
           </div>
         )}
       </ToastContext.Provider>

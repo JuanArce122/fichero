@@ -24,6 +24,8 @@ export const FREQUENCY_MULTIPLIER: Record<Frequency, number> = {
 };
 
 export const FAVORITE_MULTIPLIER = 1.5;
+/** Lo que nunca se ha repasado tiene prioridad (como la primera mitad del Daily Review de Readwise). */
+export const NEW_MULTIPLIER = 1.6;
 
 export function newReviewMeta(): ReviewMeta {
   return { recoveryDays: DEFAULT_RECOVERY_DAYS, shown: 0, recalled: 0, missed: 0 };
@@ -54,7 +56,8 @@ export function freshness(review: ReviewMeta, now: number): number {
 export function effectiveWeight(c: Candidate, now: number): number {
   const base = baseWeight(c);
   if (base <= 0) return 0;
-  return base * freshness(c.review, now);
+  const isNew = c.review.shown === 0 && c.review.lastShownAt === undefined;
+  return base * freshness(c.review, now) * (isNew ? NEW_MULTIPLIER : 1);
 }
 
 /**
