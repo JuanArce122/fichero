@@ -138,6 +138,20 @@ export function UIProvider({ children }: { children: ReactNode }) {
 export const useConfirm = () => useContext(ConfirmContext);
 export const useToast = () => useContext(ToastContext);
 
+/** Segundo toque para abrir la hoja de compartir cuando Safari rechaza el primero. */
+export function useAskToSave() {
+  const confirm = useConfirm();
+  return useCallback(
+    () =>
+      confirm({
+        title: 'Archivo listo',
+        message: 'Toca Guardar para elegir dónde guardarlo (por ejemplo, Archivos → iCloud Drive).',
+        confirm: 'Guardar',
+      }),
+    [confirm],
+  );
+}
+
 // ---------- controles ----------
 
 export function Segmented<T extends string>({
@@ -163,6 +177,19 @@ export function Segmented<T extends string>({
           {o.label}
         </button>
       ))}
+    </div>
+  );
+}
+
+/** Para enlaces a algo que ya se borró (por ejemplo, el origen de una flashcard). */
+export function NotFound({ what }: { what: string }) {
+  return (
+    <div className="page">
+      <PageHeader title="" back />
+      <Empty>
+        <h2>{what} ya no existe</h2>
+        <p>Puede que lo hayas eliminado.</p>
+      </Empty>
     </div>
   );
 }

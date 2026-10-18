@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Icon } from '../components/Icon';
 import { TagInput } from '../components/items';
-import { PageHeader, Sheet, useConfirm, useToast } from '../components/ui';
+import { NotFound, PageHeader, Sheet, useConfirm, useToast } from '../components/ui';
 import { db } from '../db/db';
 import {
   allTags,
@@ -31,7 +31,7 @@ export default function Capture() {
   const location = useLocation();
   const textRef = useRef<HTMLTextAreaElement>(null);
 
-  const existing = useLiveQuery(() => (id ? db.highlights.get(id) : undefined), [id]);
+  const existing = useLiveQuery(async () => (id ? ((await db.highlights.get(id)) ?? null) : undefined), [id]);
   const books = useLiveQuery(async () => (await db.books.toArray()).sort((a, b) => b.updatedAt - a.updatedAt), []);
   const tagSuggestions = useLiveQuery(() => allTags(), [], []);
 
@@ -129,6 +129,7 @@ export default function Capture() {
 
   if (!books || !settings) return null;
   if (editing && existing === undefined) return null;
+  if (editing && existing === null) return <NotFound what="El subrayado" />;
 
   return (
     <>

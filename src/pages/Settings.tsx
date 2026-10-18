@@ -25,18 +25,7 @@ export default function Settings() {
     setStorage(await storageStatus());
   };
 
-  const num = (key: 'dailyCount' | 'backupReminderDays' | 'restDays', min: number, max: number) => ({
-    type: 'number' as const,
-    inputMode: 'numeric' as const,
-    min,
-    max,
-    value: settings[key],
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
-      const v = Math.round(Number(e.target.value));
-      if (Number.isFinite(v) && v >= min && v <= max) updateSettings({ [key]: v });
-    },
-    style: { width: 90 },
-  });
+
 
   return (
     <div className="page">
@@ -64,7 +53,7 @@ export default function Settings() {
       <div className="list">
         <label className="list-item">
           <span className="grow">Elementos por sesión</span>
-          <input {...num('dailyCount', 1, 50)} />
+          <NumberSetting value={settings.dailyCount} min={1} max={50} onCommit={(v) => updateSettings({ dailyCount: v })} />
         </label>
         <label className="list-item">
           <span className="grow">
@@ -84,11 +73,11 @@ export default function Settings() {
       <div className="list">
         <label className="list-item">
           <span className="grow">Avisar si no respaldo en (días)</span>
-          <input {...num('backupReminderDays', 1, 90)} />
+          <NumberSetting value={settings.backupReminderDays} min={1} max={90} onCommit={(v) => updateSettings({ backupReminderDays: v })} />
         </label>
         <label className="list-item">
           <span className="grow">Días de reposo antes de la transferencia</span>
-          <input {...num('restDays', 1, 60)} />
+          <NumberSetting value={settings.restDays} min={1} max={60} onCommit={(v) => updateSettings({ restDays: v })} />
         </label>
       </div>
 
@@ -143,5 +132,41 @@ export default function Settings() {
 
       <p className="tiny muted center">Fichero · sin cuentas, sin servidor, sin IA. Tus datos viven en este dispositivo.</p>
     </div>
+  );
+}
+
+/** Campo numérico que se puede borrar mientras escribes; guarda al salir (acotado a min..max). */
+function NumberSetting({
+  value,
+  min,
+  max,
+  onCommit,
+}: {
+  value: number;
+  min: number;
+  max: number;
+  onCommit: (v: number) => void;
+}) {
+  const [draft, setDraft] = useState(String(value));
+  useEffect(() => setDraft(String(value)), [value]);
+  const commit = () => {
+    const v = Math.round(Number(draft));
+    if (!draft.trim() || !Number.isFinite(v)) return setDraft(String(value));
+    const clamped = Math.min(max, Math.max(min, v));
+    setDraft(String(clamped));
+    if (clamped !== value) onCommit(clamped);
+  };
+  return (
+    <input
+      type="number"
+      inputMode="numeric"
+      min={min}
+      max={max}
+      value={draft}
+      onChange={(e) => setDraft(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
+      style={{ width: 90 }}
+    />
   );
 }

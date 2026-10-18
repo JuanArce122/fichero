@@ -2,7 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ClozeText } from '../components/ClozeText';
-import { PageHeader, Segmented, useConfirm, useToast } from '../components/ui';
+import { NotFound, PageHeader, Segmented, useConfirm, useToast } from '../components/ui';
 import { db } from '../db/db';
 import { createFlashcard, deleteFlashcard, updateFlashcard } from '../db/repo';
 import type { FlashcardKind } from '../db/types';
@@ -19,7 +19,7 @@ export default function FlashcardForm() {
   const highlightId = params.get('subrayado');
   const cardId = params.get('ficha');
 
-  const existing = useLiveQuery(() => (id ? db.flashcards.get(id) : undefined), [id]);
+  const existing = useLiveQuery(async () => (id ? ((await db.flashcards.get(id)) ?? null) : undefined), [id]);
   const source = useLiveQuery(async () => {
     const sType = existing?.sourceType ?? (highlightId ? 'highlight' : cardId ? 'card' : undefined);
     const sId = existing?.sourceId ?? highlightId ?? cardId ?? undefined;
@@ -99,6 +99,7 @@ export default function FlashcardForm() {
   };
 
   if (id && existing === undefined) return null;
+  if (id && existing === null) return <NotFound what="La flashcard" />;
 
   return (
     <div className="page">

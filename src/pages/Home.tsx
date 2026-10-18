@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Icon, type IconName } from '../components/Icon';
 import { InstallBanner, Welcome } from '../components/Onboarding';
-import { useToast } from '../components/ui';
+import { useToast, useAskToSave } from '../components/ui';
 import { db } from '../db/db';
 import { useBooksMap, useSettings, useTopicsMap } from '../hooks';
 import { backupResultMessage, exportBackupNow } from '../lib/backupActions';
@@ -73,12 +73,13 @@ export default function Home() {
     return onThisDay(dayKey(), { journal, cards, highlights });
   }, [], []);
   const toast = useToast();
+  const askToSave = useAskToSave();
   const [backingUp, setBackingUp] = useState(false);
 
   const backup = async () => {
     setBackingUp(true);
     try {
-      toast(backupResultMessage(await exportBackupNow()));
+      toast(backupResultMessage(await exportBackupNow(askToSave)));
     } catch (e) {
       toast(`No se pudo crear el respaldo: ${(e as Error).message}`);
     } finally {

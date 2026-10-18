@@ -46,14 +46,15 @@ export default function Review() {
 
   return (
     <div className="page">
-      <PageHeader title="Repaso">
+      <PageHeader title="Repaso" />
+      <div className="row" style={{ marginTop: -8 }}>
         <Link to="/repasos" className="btn small">
           Temáticos
         </Link>
         <Link to="/maestria" className="btn small">
-          Maestría
+          Maestría{dueCards > 0 ? ` (${dueCards})` : ''}
         </Link>
-      </PageHeader>
+      </div>
 
       {total === 0 ? (
         <Empty>

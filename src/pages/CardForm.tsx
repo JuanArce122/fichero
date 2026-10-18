@@ -2,7 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { TagInput } from '../components/items';
-import { PageHeader } from '../components/ui';
+import { NotFound, PageHeader } from '../components/ui';
 import { db } from '../db/db';
 import { allTags, chaptersOf, createCard, createTopic, ensureDefaultTopics, updateCard } from '../db/repo';
 import type { Card } from '../db/types';
@@ -20,7 +20,7 @@ export default function CardForm() {
   const books = useLiveQuery(() => db.books.orderBy('updatedAt').reverse().toArray(), []);
   const fromHighlight = params.get('desde');
 
-  const existing = useLiveQuery(() => (id ? db.cards.get(id) : undefined), [id]);
+  const existing = useLiveQuery(async () => (id ? ((await db.cards.get(id)) ?? null) : undefined), [id]);
   const highlight = useLiveQuery(() => (fromHighlight ? db.highlights.get(fromHighlight) : undefined), [fromHighlight]);
 
   const [form, setForm] = useState<Partial<Card>>({ idea: '', quote: '', note: '', application: '', tags: [] });
@@ -93,6 +93,7 @@ export default function CardForm() {
   };
 
   if (id && existing === undefined) return null;
+  if (id && existing === null) return <NotFound what="La ficha" />;
 
   return (
     <form className="page" onSubmit={submit}>

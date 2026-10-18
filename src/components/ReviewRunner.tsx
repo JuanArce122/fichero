@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { db } from '../db/db';
 import { updateBook, updateCard, updateHighlight } from '../db/repo';
@@ -37,8 +37,8 @@ export function ReviewRunner({
   items: ReviewItemRef[];
   done: number[];
   recallFirst: boolean;
-  onDone: (index: number) => void;
-  onUndo?: (index: number) => void;
+  onDone: (index: number) => void | Promise<void>;
+  onUndo?: (index: number) => void | Promise<void>;
 }) {
   const index = items.findIndex((_, i) => !done.includes(i));
   const ref = index >= 0 ? items[index] : undefined;
@@ -46,6 +46,8 @@ export function ReviewRunner({
   const [noteOpen, setNoteOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [speaking, setSpeaking] = useState(false);
+  // Evita registrar dos veces un doble toque rápido.
+  const busy = useRef(false);
   const navigate = useNavigate();
   const toast = useToast();
   const books = useBooksMap();
@@ -79,11 +81,16 @@ export function ReviewRunner({
 
   const finish = useCallback(
     async (outcome: ReviewOutcome, extra?: { message: string; revert: () => Promise<void> }) => {
-      if (!ref || !item || item.type === 'missing') return;
+      if (!ref || !item || item.type === 'missing' || busy.current) return;
+      busy.current = true;
       const previous: ReviewMeta = item.type === 'card' ? item.card.review : item.h.review;
       const i = index;
-      await recordOutcome(ref, outcome);
-      onDone(i);
+      try {
+        await recordOutcome(ref, outcome);
+        await onDone(i);
+      } finally {
+        busy.current = false;
+      }
       if (onUndo) {
         toast(extra?.message ?? OUTCOME_TOAST[outcome], {
           label: 'Deshacer',

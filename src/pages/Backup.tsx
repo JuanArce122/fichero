@@ -2,7 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Icon } from '../components/Icon';
-import { PageHeader, Sheet, useToast } from '../components/ui';
+import { PageHeader, Sheet, useToast, useAskToSave } from '../components/ui';
 import { db } from '../db/db';
 import { updateSettings } from '../db/repo';
 import { useSettings } from '../hooks';
@@ -22,6 +22,7 @@ import { formatBytes } from '../lib/storage';
 export default function Backup() {
   const settings = useSettings();
   const toast = useToast();
+  const askToSave = useAskToSave();
   const navigate = useNavigate();
   const fileRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
@@ -33,7 +34,7 @@ export default function Backup() {
   const doExport = async () => {
     setBusy(true);
     try {
-      toast(backupResultMessage(await exportBackupNow()));
+      toast(backupResultMessage(await exportBackupNow(askToSave)));
     } catch (e) {
       toast(`No se pudo crear el respaldo: ${(e as Error).message}`);
     } finally {

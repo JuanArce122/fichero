@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { BookSearch } from '../components/BookSearch';
 import { BookCover } from '../components/items';
-import { PageHeader, Segmented, useConfirm, useToast } from '../components/ui';
+import { NotFound, PageHeader, Segmented, useConfirm, useToast } from '../components/ui';
 import { db } from '../db/db';
 import { createBook, deleteBook, saveImage, setBookStatus, updateBook } from '../db/repo';
 import { FREQUENCY_LABELS, STATUS_LABELS, type BookStatus, type Frequency } from '../db/types';
@@ -13,7 +13,7 @@ import { COVER_PHOTO, compressImage } from '../lib/image';
 export default function BookForm() {
   const { id } = useParams();
   const isNew = !id;
-  const book = useLiveQuery(() => (id ? db.books.get(id) : undefined), [id]);
+  const book = useLiveQuery(async () => (id ? ((await db.books.get(id)) ?? null) : undefined), [id]);
   const navigate = useNavigate();
   const confirm = useConfirm();
   const toast = useToast();
@@ -85,6 +85,7 @@ export default function BookForm() {
   };
 
   if (!isNew && book === undefined) return null;
+  if (!isNew && book === null) return <NotFound what="El libro" />;
 
   return (
     <form className="page" onSubmit={submit}>

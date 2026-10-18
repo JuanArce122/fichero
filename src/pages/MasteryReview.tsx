@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ClozeText } from '../components/ClozeText';
 import { Icon } from '../components/Icon';
@@ -15,6 +15,7 @@ export default function MasteryReview() {
   const [now, setNow] = useState(Date.now());
   const [revealed, setRevealed] = useState(false);
   const [reviewed, setReviewed] = useState(0);
+  const grading = useRef(false);
 
   // Las tarjetas con pasos cortos (1-10 min) vuelven a aparecer al vencer.
   useEffect(() => {
@@ -45,8 +46,9 @@ export default function MasteryReview() {
   if (!due) return null;
 
   const rate = async (r: Grade) => {
-    if (!card) return;
-    await gradeFlashcard(card.id, r);
+    if (!card || grading.current) return;
+    grading.current = true;
+    await gradeFlashcard(card.id, r).finally(() => (grading.current = false));
     setReviewed((n) => n + 1);
     setNow(Date.now());
   };

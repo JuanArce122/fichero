@@ -8,15 +8,30 @@ export function isAppleTouchDevice(): boolean {
   return /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 }
 
-export async function saveFile(file: File): Promise<SaveResult> {
+/**
+ * Safari solo abre la hoja de compartir si viene directo de un toque. Si antes
+ * hubo trabajo largo (leer muchos datos), la rechaza con NotAllowedError; en ese
+ * caso `askToContinue` pide un segundo toque ("Guardar") y se reintenta.
+ */
+export async function saveFile(file: File, askToContinue?: () => Promise<boolean>): Promise<SaveResult> {
   if (isAppleTouchDevice() && navigator.canShare?.({ files: [file] })) {
-    try {
-      await navigator.share({ files: [file] });
-      return 'shared';
-    } catch (err) {
-      if (err instanceof DOMException && err.name === 'AbortError') return 'cancelled';
-      // Si compartir falla por otro motivo, intentamos la descarga.
+    const attempt = async (): Promise<SaveResult | 'not-allowed' | 'failed'> => {
+      try {
+        await navigator.share({ files: [file] });
+        return 'shared';
+      } catch (err) {
+        if (err instanceof DOMException && err.name === 'AbortError') return 'cancelled';
+        if (err instanceof DOMException && err.name === 'NotAllowedError') return 'not-allowed';
+        return 'failed';
+      }
+    };
+    let result = await attempt();
+    if (result === 'not-allowed' && askToContinue) {
+      if (!(await askToContinue())) return 'cancelled';
+      result = await attempt();
     }
+    if (result === 'shared' || result === 'cancelled') return result;
+    // Si compartir falla por otro motivo, intentamos la descarga.
   }
   download(file);
   return 'downloaded';

@@ -2,7 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Icon } from '../components/Icon';
-import { PageHeader, Segmented, useToast } from '../components/ui';
+import { PageHeader, Segmented, useAskToSave, useToast } from '../components/ui';
 import { db } from '../db/db';
 import { useTopicsMap } from '../hooks';
 import { dayKey } from '../lib/dates';
@@ -32,6 +32,7 @@ const ALL = '__all__';
 
 export default function Export() {
   const toast = useToast();
+  const askToSave = useAskToSave();
   const topicsMap = useTopicsMap();
   const books = useLiveQuery(() => db.books.orderBy('updatedAt').reverse().toArray(), [], []);
   const topics = useLiveQuery(async () => (await db.topics.toArray()).sort((a, b) => a.name.localeCompare(b.name, 'es')), [], []);
@@ -45,7 +46,7 @@ export default function Export() {
   const [busy, setBusy] = useState(false);
 
   const deliver = async (content: BlobPart, name: string, type: string) => {
-    const result = await saveFile(new File([content], name, { type }));
+    const result = await saveFile(new File([content], name, { type }), askToSave);
     if (result !== 'cancelled') toast(result === 'shared' ? 'Archivo listo' : 'Archivo descargado');
   };
 

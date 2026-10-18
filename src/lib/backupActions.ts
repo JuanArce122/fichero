@@ -4,11 +4,11 @@ import { backupFileName, createBackup, serializeBackup } from './backup';
 import { saveFile, type SaveResult } from './share';
 
 /** Genera el respaldo y lo entrega (hoja de compartir o descarga). */
-export async function exportBackupNow(includeImages?: boolean): Promise<SaveResult> {
+export async function exportBackupNow(askToContinue?: () => Promise<boolean>, includeImages?: boolean): Promise<SaveResult> {
   const settings = await getSettings();
   const backup = await createBackup(db, { includeImages: includeImages ?? settings.includePhotosInBackup });
   const file = new File([serializeBackup(backup)], backupFileName(), { type: 'application/json' });
-  const result = await saveFile(file);
+  const result = await saveFile(file, askToContinue);
   if (result !== 'cancelled') await updateSettings({ lastBackupAt: Date.now() });
   return result;
 }
