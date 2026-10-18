@@ -18,7 +18,7 @@ for (const [name, size, pad] of targets) {
   await page.setViewportSize({ width: size, height: size });
   const inner = size * (1 - pad * 2);
   await page.setContent(
-    `<body style="margin:0;background:#9b3a24;display:grid;place-items:center;width:${size}px;height:${size}px">` +
+    `<body style="margin:0;background:#0e0e10;display:grid;place-items:center;width:${size}px;height:${size}px">` +
       `<div style="width:${inner}px;height:${inner}px">${svg.replace('<svg ', '<svg width="100%" height="100%" ')}</div></body>`,
   );
   await page.screenshot({ path: out(name), omitBackground: false });
