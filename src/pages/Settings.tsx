@@ -48,6 +48,11 @@ export default function Settings() {
           <span className="grow">Respaldo e importación</span>
           <Icon name="chevron" size={18} />
         </Link>
+        <Link to="/exportar" className="list-item">
+          <Icon name="download" />
+          <span className="grow">Exportar (PDF 4x6, Markdown, CSV)</span>
+          <Icon name="chevron" size={18} />
+        </Link>
         <Link to="/temas" className="list-item">
           <Icon name="cards" />
           <span className="grow">Temas de las fichas</span>

@@ -123,8 +123,56 @@ Cómo minimizar el riesgo:
   un respaldo.
 - Mantén espacio libre en el iPhone.
 
-## Publicación
+## Búsqueda y exportaciones
 
-Se publica en GitHub Pages con el workflow `.github/workflows/deploy.yml` (tests,
-compilación y despliegue en cada push a `main`). La guía paso a paso estará al
-final del proyecto.
+- **Búsqueda** (`src/lib/search.ts`): por palabras, en subrayados, notas,
+  fichas y diario. Un resultado debe contener todas las palabras; se ignoran
+  mayúsculas y acentos. Filtros: tipo, libro, tema, etiqueta, fechas y
+  favoritos.
+- **Exportar** (*Fichas → Exportar* o *Ajustes → Exportar*):
+  - **PDF 4x6** (`src/lib/pdf.ts`, jsPDF): una ficha por tarjeta de 6 × 4
+    pulgadas, por tema, por libro o selección. Si una ficha no cabe, se reduce
+    la letra y, si aún no cabe, continúa en otra tarjeta.
+  - **Markdown** por libro o por tema, y **CSV** de subrayados o fichas
+    (UTF-8 con BOM para Numbers/Excel).
+
+Para imprimir el PDF: en el iPhone, ábrelo desde la hoja de compartir →
+*Imprimir*; elige el tamaño de papel 4 × 6 in (10 × 15 cm) si tu impresora lo
+admite, o imprímelo en tamaño carta con "ajustar" y recorta.
+
+## Publicación (GitHub Pages)
+
+La app se publica sola en cada push a `main` con
+`.github/workflows/deploy.yml` (instala, corre los tests, compila con
+`BASE_PATH=/<repo>/` y despliega). Configuración inicial, una sola vez:
+
+1. Repo **público** (GitHub Pages gratis lo requiere; tus datos nunca están
+   en GitHub, solo el código).
+2. *Settings → Pages → Build and deployment → Source: GitHub Actions*.
+
+URL: `https://<usuario>.github.io/<repo>/`.
+
+Para publicar cambios propios: `git push` a `main` y espera ~1 minuto. La app
+instalada muestra "Hay una versión nueva → Actualizar".
+
+## Instalar
+
+**iPhone / iPad** (Safari):
+
+1. Abre la URL en **Safari** (no en Chrome ni otro navegador).
+2. Toca **Compartir** (cuadrado con flecha) → **Agregar a pantalla de inicio**
+   → **Agregar**. En iPad, el botón Compartir está arriba a la derecha.
+3. Abre la app **siempre desde el ícono**. Ve a *Ajustes* y comprueba que
+   diga "Instalada en pantalla de inicio: sí".
+4. Ábrela una vez con internet para que descargue todo (incluido el OCR);
+   luego funciona sin conexión.
+
+**Mac** (Safari 17 o posterior, macOS Sonoma+): abre la URL y elige
+*Archivo → Agregar al Dock*. Queda como app independiente. (En Chrome: menú
+⋮ → *Transmitir, guardar y compartir → Instalar página como app*.)
+
+**Llevar tus datos al iPad o al Mac**: en el iPhone, *Ajustes → Respaldo →
+Respaldar ahora* → *Guardar en Archivos* → iCloud Drive. En el otro
+dispositivo: *Ajustes → Respaldo → Elegir archivo…* → elige el respaldo →
+*Importar*. Recuerda que no hay sincronización: los cambios hechos en el iPad
+o el Mac no vuelven solos al iPhone.

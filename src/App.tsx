@@ -14,6 +14,7 @@ import CardForm from './pages/CardForm';
 import ChapterClose from './pages/ChapterClose';
 import Cards from './pages/Cards';
 import Home from './pages/Home';
+import Export from './pages/Export';
 import FlashcardForm from './pages/FlashcardForm';
 import Journal from './pages/Journal';
 import Library from './pages/Library';
@@ -22,6 +23,7 @@ import MasteryReview from './pages/MasteryReview';
 import PhotoCapture from './pages/PhotoCapture';
 import Practice, { PracticeDetail, PracticeStart } from './pages/Practice';
 import Review from './pages/Review';
+import Search from './pages/Search';
 import Settings from './pages/Settings';
 import ThemedReview from './pages/ThemedReview';
 import Topics from './pages/Topics';
@@ -132,7 +134,8 @@ export default function App() {
               <Route path="/transferir/:id" element={<Transfer />} />
               <Route path="/diario" element={<Journal />} />
               <Route path="/diario/:date" element={<Journal />} />
-              <Route path="/buscar" element={<ComingSoon title="Buscar" />} />
+              <Route path="/buscar" element={<Search />} />
+              <Route path="/exportar" element={<Export />} />
               <Route path="*" element={<ComingSoon title="No encontrado" />} />
             </Routes>
           </main>

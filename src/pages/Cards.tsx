@@ -28,13 +28,18 @@ export default function Cards() {
   return (
     <div className="page wide">
       <PageHeader title="Fichas">
-        <Link to="/temas" className="btn small">
-          Temas
-        </Link>
         <Link to="/ficha/nueva" className="btn small primary">
           <Icon name="plus" size={16} /> Ficha
         </Link>
       </PageHeader>
+      <div className="row" style={{ marginTop: -8 }}>
+        <Link to="/temas" className="btn small">
+          Temas
+        </Link>
+        <Link to="/exportar" className="btn small">
+          <Icon name="download" size={16} /> Exportar
+        </Link>
+      </div>
 
       {cards.length === 0 ? (
         <Empty>

@@ -1138,3 +1138,22 @@ select:focus {
   outline: 2px solid var(--accent);
   outline-offset: -2px;
 }
+
+mark {
+  background: var(--warn-soft);
+  color: inherit;
+  border-radius: 3px;
+  padding: 0 1px;
+}
+
+input[type='date'] {
+  width: 100%;
+  font: inherit;
+  font-size: 17px;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  min-height: 46px;
+}
