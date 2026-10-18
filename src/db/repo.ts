@@ -405,6 +405,14 @@ export async function saveImage(
 
 /** Todas las etiquetas usadas, ordenadas. */
 export async function allTags(db: FicheroDB = defaultDb): Promise<string[]> {
-  const [h, c] = await Promise.all([db.highlights.orderBy('tags').uniqueKeys(), db.cards.orderBy('tags').uniqueKeys()]);
-  return [...new Set([...h, ...c].map(String))].sort((a, b) => a.localeCompare(b, 'es'));
+  let keys: unknown[];
+  try {
+    const [h, c] = await Promise.all([db.highlights.orderBy('tags').uniqueKeys(), db.cards.orderBy('tags').uniqueKeys()]);
+    keys = [...h, ...c];
+  } catch {
+    // Algunas versiones de Safari fallan con índices de varias entradas: lo calculamos a mano.
+    const [h, c] = await Promise.all([db.highlights.toArray(), db.cards.toArray()]);
+    keys = [...h, ...c].flatMap((x) => x.tags ?? []);
+  }
+  return [...new Set(keys.map(String))].sort((a, b) => a.localeCompare(b, 'es'));
 }

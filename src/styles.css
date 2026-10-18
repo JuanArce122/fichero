@@ -1366,3 +1366,18 @@ select:focus-visible {
   color: var(--muted);
   margin-bottom: -10px;
 }
+
+.error-details {
+  max-width: 100%;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  text-align: left;
+  font-size: 0.75rem;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--muted);
+  -webkit-user-select: text;
+  user-select: text;
+}

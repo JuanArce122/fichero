@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { HashRouter, NavLink, Route, Routes, useLocation } from 'react-router-dom';
 import { useRegisterSW } from 'virtual:pwa-register/react';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { Icon, type IconName } from './components/Icon';
 import { PageHeader, UIProvider } from './components/ui';
 import { closeExpiredPractices, ensureDefaultTopics } from './db/repo';
@@ -56,6 +57,11 @@ function TabBar() {
   );
 }
 
+function RouteErrorBoundary({ children }: { children: React.ReactNode }) {
+  const { pathname } = useLocation();
+  return <ErrorBoundary resetKey={pathname}>{children}</ErrorBoundary>;
+}
+
 function ScrollToTop() {
   const { pathname } = useLocation();
   useEffect(() => window.scrollTo(0, 0), [pathname]);
@@ -105,6 +111,7 @@ export default function App() {
         <div className="app">
           <TabBar />
           <main className="main">
+            <RouteErrorBoundary>
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/biblioteca" element={<Library />} />
@@ -138,6 +145,7 @@ export default function App() {
               <Route path="/exportar" element={<Export />} />
               <Route path="*" element={<ComingSoon title="No encontrado" />} />
             </Routes>
+            </RouteErrorBoundary>
           </main>
         </div>
       </UIProvider>
