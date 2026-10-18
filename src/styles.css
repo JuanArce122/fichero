@@ -1035,3 +1035,63 @@ select:focus {
   outline-offset: -2px;
   background: var(--accent-soft);
 }
+
+/* ---------- Maestría ---------- */
+
+.cloze {
+  display: inline-block;
+  min-width: 2.5em;
+  padding: 0 6px;
+  border-radius: 6px;
+  background: var(--surface-2);
+  color: var(--muted);
+  text-align: center;
+}
+
+.cloze.shown {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.tokens {
+  font-family: var(--font-read);
+  font-size: 1.1rem;
+  line-height: 2.1;
+}
+
+.tokens button {
+  font: inherit;
+  border: 0;
+  background: none;
+  color: inherit;
+  padding: 2px 3px;
+  margin: 0 -1px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.tokens button.on {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.grades {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.grades .btn {
+  flex-direction: column;
+  gap: 0;
+  min-height: 58px;
+  padding: 0 4px;
+  font-size: 0.9rem;
+}
+
+.grades .btn small {
+  font-size: 0.72rem;
+  font-weight: 500;
+  opacity: 0.75;
+}

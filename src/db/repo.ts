@@ -9,11 +9,13 @@ import {
   type BookStatus,
   type Card,
   type Chapter,
+  type Flashcard,
   type Highlight,
   type ID,
   type Settings,
   type Topic,
 } from './types';
+import { grade, newFsrsState, type Grade } from '../lib/mastery';
 import { newReviewMeta } from '../lib/review';
 
 export function uid(): ID {
@@ -238,6 +240,55 @@ export async function updateCard(id: ID, patch: Partial<Card>, db: FicheroDB = d
 
 export async function deleteCard(id: ID, db: FicheroDB = defaultDb): Promise<void> {
   await db.cards.delete(id);
+}
+
+// ---------- flashcards (Maestría) ----------
+
+export type FlashcardInput = Pick<Flashcard, 'kind'> &
+  Partial<Pick<Flashcard, 'text' | 'question' | 'answer' | 'sourceType' | 'sourceId'>>;
+
+export async function createFlashcard(data: FlashcardInput, db: FicheroDB = defaultDb): Promise<Flashcard> {
+  const now = Date.now();
+  const fsrs = newFsrsState(now);
+  const card: Flashcard = {
+    id: uid(),
+    kind: data.kind,
+    sourceType: data.sourceType,
+    sourceId: data.sourceId,
+    text: data.text?.trim() ?? '',
+    question: data.question?.trim() ?? '',
+    answer: data.answer?.trim() ?? '',
+    fsrs,
+    due: fsrs.due,
+    suspended: false,
+    createdAt: now,
+    updatedAt: now,
+  };
+  await db.flashcards.add(card);
+  return card;
+}
+
+export async function updateFlashcard(id: ID, patch: Partial<Flashcard>, db: FicheroDB = defaultDb): Promise<void> {
+  await db.flashcards.update(id, { ...patch, updatedAt: Date.now() });
+}
+
+export async function deleteFlashcard(id: ID, db: FicheroDB = defaultDb): Promise<void> {
+  await db.flashcards.delete(id);
+}
+
+export async function gradeFlashcard(id: ID, rating: Grade, db: FicheroDB = defaultDb, now = Date.now()): Promise<void> {
+  await db.transaction('rw', db.flashcards, async () => {
+    const card = await db.flashcards.get(id);
+    if (!card) return;
+    const fsrs = grade(card.fsrs, rating, now);
+    await db.flashcards.update(id, { fsrs, due: fsrs.due, updatedAt: now });
+  });
+}
+
+/** Tarjetas vencidas (no suspendidas), las más atrasadas primero. */
+export async function dueFlashcards(db: FicheroDB = defaultDb, now = Date.now()): Promise<Flashcard[]> {
+  const list = await db.flashcards.where('due').belowOrEqual(now).toArray();
+  return list.filter((c) => !c.suspended).sort((a, b) => a.due - b.due);
 }
 
 // ---------- imágenes ----------

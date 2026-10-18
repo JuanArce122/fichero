@@ -1,6 +1,8 @@
 // Modelo de datos. Todo se guarda localmente en IndexedDB (Dexie).
 // Las fechas son timestamps en milisegundos; los días de calendario, 'YYYY-MM-DD'.
 
+import type { StoredFsrs } from '../lib/mastery';
+
 export type ID = string;
 
 export type BookStatus = 'reading' | 'resting' | 'finished' | 'processed';
@@ -116,7 +118,8 @@ export interface Flashcard {
   text: string;
   question: string;
   answer: string;
-  fsrs: Record<string, unknown>;
+  fsrs: StoredFsrs;
+  /** Copia de fsrs.due, indexada para buscar las tarjetas que vencen. */
   due: number;
   suspended: boolean;
   createdAt: number;

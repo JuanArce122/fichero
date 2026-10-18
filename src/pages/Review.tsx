@@ -48,6 +48,9 @@ export default function Review() {
         <Link to="/repasos" className="btn small">
           Temáticos
         </Link>
+        <Link to="/maestria" className="btn small">
+          Maestría
+        </Link>
       </PageHeader>
 
       {total === 0 ? (

@@ -5,7 +5,7 @@ import type { Settings } from '../db/types';
 import { dayKey, daysBetween } from './dates';
 import { DAY_MS } from './review';
 
-export type NoticeKind = 'review' | 'backup';
+export type NoticeKind = 'review' | 'mastery' | 'backup';
 
 export interface Notice {
   kind: NoticeKind;
@@ -34,6 +34,16 @@ export async function computeNotices(settings: Settings, db: FicheroDB = default
       const left = session.items.length - session.done.length;
       notices.push({ kind: 'review', title: 'Repaso de hoy', detail: `Quedan ${left}`, to: '/repaso' });
     }
+  }
+
+  const dueCards = (await db.flashcards.where('due').belowOrEqual(now).toArray()).filter((c) => !c.suspended).length;
+  if (dueCards > 0) {
+    notices.push({
+      kind: 'mastery',
+      title: 'Maestría',
+      detail: `${dueCards} ${dueCards === 1 ? 'tarjeta por repasar' : 'tarjetas por repasar'}`,
+      to: '/maestria/repaso',
+    });
   }
 
   if (backupOverdue(settings, hasData, now)) {

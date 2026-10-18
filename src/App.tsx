@@ -14,10 +14,14 @@ import CardForm from './pages/CardForm';
 import ChapterClose from './pages/ChapterClose';
 import Cards from './pages/Cards';
 import Home from './pages/Home';
+import FlashcardForm from './pages/FlashcardForm';
 import Library from './pages/Library';
+import Mastery from './pages/Mastery';
+import MasteryReview from './pages/MasteryReview';
 import PhotoCapture from './pages/PhotoCapture';
 import Review from './pages/Review';
 import Settings from './pages/Settings';
+import ThemedReview from './pages/ThemedReview';
 import Topics from './pages/Topics';
 
 const TABS: { to: string; icon: IconName; label: string; className?: string }[] = [
@@ -113,8 +117,11 @@ export default function App() {
               <Route path="/respaldo" element={<Backup />} />
               <Route path="/capturar/foto" element={<PhotoCapture />} />
               <Route path="/cierre" element={<ChapterClose />} />
-              <Route path="/repasos" element={<ComingSoon title="Repasos temáticos" />} />
-              <Route path="/maestria/*" element={<ComingSoon title="Maestría" />} />
+              <Route path="/repasos" element={<ThemedReview />} />
+              <Route path="/maestria" element={<Mastery />} />
+              <Route path="/maestria/repaso" element={<MasteryReview />} />
+              <Route path="/maestria/nueva" element={<FlashcardForm />} />
+              <Route path="/maestria/:id" element={<FlashcardForm />} />
               <Route path="/practica/*" element={<ComingSoon title="Idea de la semana" />} />
               <Route path="/diario" element={<ComingSoon title="Diario" />} />
               <Route path="/buscar" element={<ComingSoon title="Buscar" />} />

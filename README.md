@@ -50,6 +50,14 @@ peso = frecuencia del libro × frecuencia del tema × (1,5 si es favorito) × fr
 
 La lógica está en `src/lib/review.ts` y sus tests en `src/lib/review.test.ts`.
 
+## Modo Maestría (FSRS)
+
+Las flashcards (huecos o pregunta/respuesta) se programan con
+[ts-fsrs](https://github.com/open-spaced-repetition/ts-fsrs), con pasos cortos
+de 1 y 10 minutos: lo que olvidas vuelve dentro de la misma sesión. El estado
+FSRS se guarda con fechas en milisegundos para que viaje intacto en el
+respaldo. Lógica y tests en `src/lib/mastery.ts`.
+
 ## OCR local
 
 La captura con foto usa [Tesseract.js](https://github.com/naptha/tesseract.js) en
