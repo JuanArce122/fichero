@@ -6,6 +6,8 @@ import { PageHeader, useConfirm } from '../components/ui';
 import { db } from '../db/db';
 import { deleteCard, updateCard } from '../db/repo';
 import { useTopicsMap } from '../hooks';
+import { PRACTICE_DAYS, appliedCount } from '../lib/apply';
+import { formatDay } from '../lib/dates';
 
 export default function CardDetail() {
   const { id = '' } = useParams();
@@ -15,12 +17,21 @@ export default function CardDetail() {
   const data = useLiveQuery(async () => {
     const card = await db.cards.get(id);
     if (!card) return { card: null };
-    const [book, chapter, highlights] = await Promise.all([
+    const [book, chapter, highlights, practices, journal] = await Promise.all([
       card.bookId ? db.books.get(card.bookId) : undefined,
       card.chapterId ? db.chapters.get(card.chapterId) : undefined,
       db.highlights.bulkGet(card.highlightIds),
+      db.practices.where('cardId').equals(card.id).toArray(),
+      db.journal.filter((e) => e.cardIds.includes(card.id)).toArray(),
     ]);
-    return { card, book, chapter, highlights: highlights.filter((h) => !!h) };
+    return {
+      card,
+      book,
+      chapter,
+      highlights: highlights.filter((h) => !!h),
+      practices: practices.sort((a, b) => b.createdAt - a.createdAt),
+      journal: journal.sort((a, b) => b.date.localeCompare(a.date)),
+    };
   }, [id]);
 
   if (!data) return null;
@@ -31,7 +42,7 @@ export default function CardDetail() {
       </div>
     );
   }
-  const { card, book, chapter, highlights = [] } = data;
+  const { card, book, chapter, highlights = [], practices = [], journal = [] } = data;
 
   const remove = async () => {
     if (await confirm({ title: '¿Eliminar esta ficha?', confirm: 'Eliminar', danger: true })) {
@@ -73,6 +84,42 @@ export default function CardDetail() {
           </button>
         </div>
       </div>
+
+      {practices.length > 0 && (
+        <section className="stack-sm">
+          <div className="section-title">Practicada</div>
+          <div className="list">
+            {practices.map((p) => (
+              <Link key={p.id} to={p.status === 'active' ? '/practica' : `/practica/${p.id}`} className="list-item">
+                <span className="grow small">
+                  {formatDay(p.startDate)} · aplicada {appliedCount(p)} de {PRACTICE_DAYS} días
+                  {p.status === 'active' ? ' · en curso' : ''}
+                </span>
+                <Icon name="chevron" size={18} />
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {journal.length > 0 && (
+        <section className="stack-sm">
+          <div className="section-title">En el diario</div>
+          <div className="list">
+            {journal.map((e) => (
+              <Link key={e.id} to={`/diario/${e.date}`} className="list-item">
+                <div className="grow">
+                  <div className="small" style={{ fontWeight: 600 }}>
+                    {formatDay(e.date)}
+                  </div>
+                  <div className="small muted ellipsis">{e.answers[0]?.answer}</div>
+                </div>
+                <Icon name="chevron" size={18} />
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       {highlights.length > 0 && (
         <section className="stack-sm">

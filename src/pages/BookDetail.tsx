@@ -7,7 +7,8 @@ import { Empty, PageHeader, Segmented, Sheet, useConfirm } from '../components/u
 import { db } from '../db/db';
 import { addChapter, chaptersOf, deleteChapter } from '../db/repo';
 import { STATUS_LABELS, type Chapter } from '../db/types';
-import { useTopicsMap } from '../hooks';
+import { daysUntilTransfer } from '../lib/apply';
+import { useSettings, useTopicsMap } from '../hooks';
 
 type Tab = 'highlights' | 'cards' | 'chapters';
 
@@ -16,6 +17,7 @@ export default function BookDetail() {
   const [tab, setTab] = useState<Tab>('highlights');
   const [addingChapter, setAddingChapter] = useState(false);
   const topics = useTopicsMap();
+  const settings = useSettings();
   const data = useLiveQuery(async () => {
     const book = await db.books.get(id);
     if (!book) return { book: null };
@@ -82,6 +84,26 @@ export default function BookDetail() {
           <Icon name="timer" size={18} /> Cierre
         </Link>
       </div>
+
+      {book.status === 'resting' && (
+        <Link to={`/transferir/${id}`} className="notice warn">
+          <span className="dot" />
+          <div className="spacer">
+            <div>Sesión de transferencia</div>
+            <div className="small muted">
+              {daysUntilTransfer(book, settings.restDays) > 0
+                ? `En reposo: faltan ${daysUntilTransfer(book, settings.restDays)} días (puedes empezar antes)`
+                : `Lista: ${pending} ${pending === 1 ? 'subrayado' : 'subrayados'} por procesar`}
+            </div>
+          </div>
+          <Icon name="chevron" size={18} />
+        </Link>
+      )}
+      {book.status === 'processed' && pending > 0 && (
+        <Link to={`/transferir/${id}`} className="btn small" style={{ alignSelf: 'flex-start' }}>
+          Revisar {pending} subrayados sin procesar
+        </Link>
+      )}
 
       <Segmented
         value={tab}

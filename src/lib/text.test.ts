@@ -16,3 +16,10 @@ describe('cleanText', () => {
     expect(cleanText('  a   b \r\n')).toBe('a b');
   });
 });
+
+describe('normalize', () => {
+  it('ignora mayúsculas y acentos', async () => {
+    const { normalize } = await import('./text');
+    expect(normalize('Percepción ÁRBOL')).toBe('percepcion arbol');
+  });
+});

@@ -7,3 +7,8 @@ export function cleanText(text: string): string {
     .replace(/[ \t]+/g, ' ')
     .trim();
 }
+
+/** Minúsculas y sin acentos, para búsquedas por palabras. */
+export function normalize(text: string): string {
+  return text.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
+}

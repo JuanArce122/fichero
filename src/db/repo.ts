@@ -12,9 +12,13 @@ import {
   type Flashcard,
   type Highlight,
   type ID,
+  type JournalEntry,
+  type Practice,
   type Settings,
   type Topic,
 } from './types';
+import { isExpired, practiceEndDate } from '../lib/apply';
+import { dayKey } from '../lib/dates';
 import { grade, newFsrsState, type Grade } from '../lib/mastery';
 import { newReviewMeta } from '../lib/review';
 
@@ -289,6 +293,102 @@ export async function gradeFlashcard(id: ID, rating: Grade, db: FicheroDB = defa
 export async function dueFlashcards(db: FicheroDB = defaultDb, now = Date.now()): Promise<Flashcard[]> {
   const list = await db.flashcards.where('due').belowOrEqual(now).toArray();
   return list.filter((c) => !c.suspended).sort((a, b) => a.due - b.due);
+}
+
+// ---------- transferencia ----------
+
+/** Marca un subrayado como revisado en la transferencia (y opcionalmente lo descarta). */
+export async function markProcessed(id: ID, discard = false, db: FicheroDB = defaultDb): Promise<void> {
+  await updateHighlight(id, discard ? { processed: true, discarded: true } : { processed: true }, db);
+}
+
+// ---------- idea de la semana ----------
+
+export async function activePractice(db: FicheroDB = defaultDb): Promise<Practice | undefined> {
+  return db.practices.where('status').equals('active').first();
+}
+
+/** Empieza a practicar una ficha durante 7 días. Detiene la práctica activa anterior. */
+export async function startPractice(cardId: ID, db: FicheroDB = defaultDb, today = dayKey()): Promise<Practice> {
+  return db.transaction('rw', db.practices, async () => {
+    await db.practices.where('status').equals('active').modify({ status: 'stopped' });
+    const p: Practice = {
+      id: uid(),
+      cardId,
+      startDate: today,
+      endDate: practiceEndDate(today),
+      checkins: [],
+      reflection: '',
+      status: 'active',
+      createdAt: Date.now(),
+    };
+    await db.practices.add(p);
+    return p;
+  });
+}
+
+export async function saveCheckin(
+  id: ID,
+  checkin: { date: string; applied: boolean; note: string },
+  db: FicheroDB = defaultDb,
+): Promise<void> {
+  await db.practices
+    .where('id')
+    .equals(id)
+    .modify((p) => {
+      p.checkins = [...p.checkins.filter((c) => c.date !== checkin.date), { ...checkin, note: checkin.note.trim() }].sort(
+        (a, b) => a.date.localeCompare(b.date),
+      );
+    });
+}
+
+export async function finishPractice(
+  id: ID,
+  status: 'completed' | 'stopped',
+  reflection?: string,
+  db: FicheroDB = defaultDb,
+): Promise<void> {
+  const patch: Partial<Practice> = { status };
+  if (reflection !== undefined) patch.reflection = reflection.trim();
+  await db.practices.update(id, patch);
+}
+
+/** Da por completadas las prácticas cuyo último día ya pasó. */
+export async function closeExpiredPractices(db: FicheroDB = defaultDb, today = dayKey()): Promise<void> {
+  await db.practices
+    .where('status')
+    .equals('active')
+    .modify((p) => {
+      if (isExpired(p, today)) p.status = 'completed';
+    });
+}
+
+// ---------- diario ----------
+
+export async function journalFor(date: string, db: FicheroDB = defaultDb): Promise<JournalEntry | undefined> {
+  return db.journal.where('date').equals(date).first();
+}
+
+/** Guarda la entrada del día (una por día). */
+export async function saveJournal(
+  date: string,
+  data: Pick<JournalEntry, 'answers' | 'cardIds'>,
+  db: FicheroDB = defaultDb,
+): Promise<JournalEntry> {
+  return db.transaction('rw', db.journal, async () => {
+    const now = Date.now();
+    const existing = await journalFor(date, db);
+    const answers = data.answers.map((a) => ({ question: a.question, answer: a.answer.trim() }));
+    const entry: JournalEntry = existing
+      ? { ...existing, answers, cardIds: data.cardIds, updatedAt: now }
+      : { id: uid(), date, answers, cardIds: data.cardIds, createdAt: now, updatedAt: now };
+    await db.journal.put(entry);
+    return entry;
+  });
+}
+
+export async function deleteJournal(id: ID, db: FicheroDB = defaultDb): Promise<void> {
+  await db.journal.delete(id);
 }
 
 // ---------- imágenes ----------

@@ -3,7 +3,7 @@ import { HashRouter, NavLink, Route, Routes, useLocation } from 'react-router-do
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import { Icon, type IconName } from './components/Icon';
 import { PageHeader, UIProvider } from './components/ui';
-import { ensureDefaultTopics } from './db/repo';
+import { closeExpiredPractices, ensureDefaultTopics } from './db/repo';
 import { requestPersistence } from './lib/storage';
 import Backup from './pages/Backup';
 import BookDetail from './pages/BookDetail';
@@ -15,14 +15,17 @@ import ChapterClose from './pages/ChapterClose';
 import Cards from './pages/Cards';
 import Home from './pages/Home';
 import FlashcardForm from './pages/FlashcardForm';
+import Journal from './pages/Journal';
 import Library from './pages/Library';
 import Mastery from './pages/Mastery';
 import MasteryReview from './pages/MasteryReview';
 import PhotoCapture from './pages/PhotoCapture';
+import Practice, { PracticeDetail, PracticeStart } from './pages/Practice';
 import Review from './pages/Review';
 import Settings from './pages/Settings';
 import ThemedReview from './pages/ThemedReview';
 import Topics from './pages/Topics';
+import Transfer from './pages/Transfer';
 
 const TABS: { to: string; icon: IconName; label: string; className?: string }[] = [
   { to: '/', icon: 'home', label: 'Inicio' },
@@ -89,6 +92,7 @@ export default function App() {
   useEffect(() => {
     requestPersistence();
     ensureDefaultTopics();
+    closeExpiredPractices();
   }, []);
 
   return (
@@ -122,8 +126,12 @@ export default function App() {
               <Route path="/maestria/repaso" element={<MasteryReview />} />
               <Route path="/maestria/nueva" element={<FlashcardForm />} />
               <Route path="/maestria/:id" element={<FlashcardForm />} />
-              <Route path="/practica/*" element={<ComingSoon title="Idea de la semana" />} />
-              <Route path="/diario" element={<ComingSoon title="Diario" />} />
+              <Route path="/practica" element={<Practice />} />
+              <Route path="/practica/nueva" element={<PracticeStart />} />
+              <Route path="/practica/:id" element={<PracticeDetail />} />
+              <Route path="/transferir/:id" element={<Transfer />} />
+              <Route path="/diario" element={<Journal />} />
+              <Route path="/diario/:date" element={<Journal />} />
               <Route path="/buscar" element={<ComingSoon title="Buscar" />} />
               <Route path="*" element={<ComingSoon title="No encontrado" />} />
             </Routes>

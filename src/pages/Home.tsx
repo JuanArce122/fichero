@@ -6,6 +6,8 @@ import { useToast } from '../components/ui';
 import { db } from '../db/db';
 import { useBooksMap, useSettings, useTopicsMap } from '../hooks';
 import { backupResultMessage, exportBackupNow } from '../lib/backupActions';
+import { PRACTICE_DAYS, practiceDayNumber } from '../lib/apply';
+import { dayKey } from '../lib/dates';
 import { computeNotices } from '../lib/notices';
 
 interface Quote {
@@ -59,6 +61,10 @@ export default function Home() {
         .filter(Boolean)
         .join(' · ')
     : '';
+  const practice = useLiveQuery(async () => {
+    const p = await db.practices.where('status').equals('active').first();
+    return p ? { p, card: await db.cards.get(p.cardId) } : null;
+  }, []);
   const toast = useToast();
   const [backingUp, setBackingUp] = useState(false);
 
@@ -126,6 +132,29 @@ export default function Home() {
           )}
         </section>
       )}
+
+      <section className="stack-sm">
+        <div className="section-title">Idea de la semana</div>
+        {practice?.card ? (
+          <Link to="/practica" className="notice">
+            <div className="spacer">
+              <div className="tiny muted">
+                Día {practiceDayNumber(practice.p, dayKey()) ?? PRACTICE_DAYS} de {PRACTICE_DAYS} ·{' '}
+                {topics.get(practice.card.topicId)?.name}
+              </div>
+              <div className="clamp-3" style={{ fontFamily: 'var(--font-read)' }}>
+                {practice.card.idea}
+              </div>
+            </div>
+            <Icon name="chevron" size={18} />
+          </Link>
+        ) : (
+          <Link to="/practica" className="notice">
+            <span className="spacer muted">Elige una ficha para practicar esta semana</span>
+            <Icon name="chevron" size={18} />
+          </Link>
+        )}
+      </section>
 
       <section className="stack-sm">
         <div className="section-title">Accesos rápidos</div>

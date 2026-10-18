@@ -2,10 +2,11 @@
 
 import { db as defaultDb, type FicheroDB } from '../db/db';
 import type { Settings } from '../db/types';
+import { needsCheckin, pendingHighlights, practiceDayNumber, readyForTransfer } from './apply';
 import { dayKey, daysBetween } from './dates';
 import { DAY_MS } from './review';
 
-export type NoticeKind = 'review' | 'mastery' | 'backup';
+export type NoticeKind = 'review' | 'mastery' | 'practice' | 'journal' | 'transfer' | 'backup';
 
 export interface Notice {
   kind: NoticeKind;
@@ -14,6 +15,9 @@ export interface Notice {
   to?: string;
   warn?: boolean;
 }
+
+/** A partir de esta hora se sugiere escribir el diario. */
+export const JOURNAL_HOUR = 18;
 
 export function backupOverdue(settings: Settings, hasData: boolean, now = Date.now()): boolean {
   if (!hasData) return false;
@@ -43,6 +47,34 @@ export async function computeNotices(settings: Settings, db: FicheroDB = default
       title: 'Maestría',
       detail: `${dueCards} ${dueCards === 1 ? 'tarjeta por repasar' : 'tarjetas por repasar'}`,
       to: '/maestria/repaso',
+    });
+  }
+
+  const today = dayKey(now);
+  const practice = await db.practices.where('status').equals('active').first();
+  if (practice && needsCheckin(practice, today)) {
+    notices.push({
+      kind: 'practice',
+      title: 'Idea de la semana',
+      detail: `Día ${practiceDayNumber(practice, today)}: ¿la aplicaste hoy?`,
+      to: '/practica',
+    });
+  }
+
+  if (new Date(now).getHours() >= JOURNAL_HOUR && !(await db.journal.where('date').equals(today).count())) {
+    notices.push({ kind: 'journal', title: 'Diario de hoy', detail: 'Unos minutos para revisar el día', to: '/diario' });
+  }
+
+  for (const book of await db.books.where('status').equals('resting').toArray()) {
+    if (!readyForTransfer(book, settings.restDays, now)) continue;
+    const pending = pendingHighlights(await db.highlights.where('bookId').equals(book.id).toArray()).length;
+    notices.push({
+      kind: 'transfer',
+      title: `Hora de la transferencia: ${book.title}`,
+      detail: pending
+        ? `${pending} ${pending === 1 ? 'subrayado por procesar' : 'subrayados por procesar'}`
+        : 'Revisa el libro y márcalo como procesado',
+      to: `/transferir/${book.id}`,
     });
   }
 
